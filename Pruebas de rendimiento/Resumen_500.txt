@@ -1,4 +1,0 @@
-timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,Latency,IdleTime,Connect
-1519968602408,10296,Ping,200,OK,Ping 500 1-2,text,true,,293,130,3,3,10296,0,137
-1519968602408,10296,Ping,200,OK,Ping 500 1-1,text,true,,292,130,3,3,10296,0,124
-1519968602410,10961,Ping,400,Bad Request,Ping 500 1-3,text,false,,3873,130,1,1,10961,0,122
