@@ -1,0 +1,4 @@
+Proyecto Ping Pong
+
+-Documentación del diseño en la carpeta /Diseño
+-Pruebas de rendimiento con Jmeter en la carpeta /PruebasDeRendimiento
