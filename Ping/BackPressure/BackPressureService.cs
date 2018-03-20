@@ -1,22 +1,21 @@
 ﻿using Aolh.Lib.BackPressure.Basic;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Ping.BackPressure
 {
+    /// <summary>
+    /// Servicio para manejo del back pressure.
+    /// </summary>
+    /// <param name="numberThreads">Número de hilos que serán usados.</param>
+    /// <param name="maxLatency">Máxima latencia permitida.</param>
     public static class BackPressureService
     {
         public static BasicBackPressure backPressure;
         static BackPressureService()
         {
-            backPressure = new BasicBackPressure();
+            int numberThreads = Properties.Settings.Default.NumberThreads;
+            double maxLatency = Properties.Settings.Default.MaxLatency;
+
+            backPressure = new BasicBackPressure(numberThreads, maxLatency);
         }
-
-
-
     }
 }

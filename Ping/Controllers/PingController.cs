@@ -1,8 +1,4 @@
-﻿using Aolh.Library.Serialization.Binary;
-using Aolh.MessageBroker.Fabric.Messaging;
-using Aolh.MessageBroker.Interfaces.Messaging;
-using Aolh.Ping.Domain.Services;
-using Aolh.PingPong.SharedDomain.Messaging;
+﻿using Aolh.Lib.BackPressure.Basic.Requests;
 using Ping.Async;
 using Ping.BackPressure;
 using System;
@@ -17,32 +13,36 @@ namespace Ping.Controllers
     [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
     public class PingController : IPingController
     {
-        private static Object thisLock = new Object();
-        public string Get(string id)
+        public PingController()
         {
-            return "Ping " + id;
         }
-        public IAsyncResult BeginCommunication(string id, AsyncCallback callback, object state)
+        /// <summary>
+        /// Inicio de tarea asíncrona para una nueva petición.
+        /// </summary>
+        public IAsyncResult BeginGetAsync(AsyncCallback callback, object state)
         {
-            Console.WriteLine("Nueva solicitud http " + DateTime.Now.ToString());
-                if (BackPressureService.backPressure.isFull())
-                {
-                    throw new WebFaultException(System.Net.HttpStatusCode.Forbidden);
-                }
-                else
-                {
-                    var messageAsyncResult = new MessageAsyncResult(id, callback, state);
-                    ThreadPool.QueueUserWorkItem(CompleteProcess, messageAsyncResult);
-                    return messageAsyncResult;
-                } 
+            Console.WriteLine("Nueva solicitud http: " + DateTime.Now.ToString());
+            var messageAsyncResult = new MessageAsyncResult(  callback, state);
+            ThreadPool.QueueUserWorkItem(CompleteProcess, messageAsyncResult);
+            return messageAsyncResult;
         }
 
-        public string EndCommunication(IAsyncResult asyncResult)
+        /// <summary>
+        /// Fin de la tarea asíncrona de la petición.
+        /// </summary>
+        public string EndGetAsync(IAsyncResult asyncResult)
         {
             var messageAsyncResult = asyncResult as MessageAsyncResult;
             messageAsyncResult.AsyncWait.WaitOne();
-            Console.WriteLine("Enviando respuesta http al cliente " + messageAsyncResult.Data);
-            return messageAsyncResult.Data;
+            Console.WriteLine("Enviando respuesta http al cliente: " + messageAsyncResult.Data);
+            if (messageAsyncResult.Exception==null)
+            {
+                return messageAsyncResult.Data;
+            }
+            else
+            {
+                throw new WebFaultException(System.Net.HttpStatusCode.ServiceUnavailable);
+            }
         }
 
         private void CompleteProcess(object state)

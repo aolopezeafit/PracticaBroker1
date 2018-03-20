@@ -58,5 +58,29 @@ namespace Ping.Properties {
                 return ((string)(this["MessageBrokerNetwork"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("60000")]
+        public double MaxLatency {
+            get {
+                return ((double)(this["MaxLatency"]));
+            }
+            set {
+                this["MaxLatency"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public int NumberThreads {
+            get {
+                return ((int)(this["NumberThreads"]));
+            }
+            set {
+                this["NumberThreads"] = value;
+            }
+        }
     }
 }
