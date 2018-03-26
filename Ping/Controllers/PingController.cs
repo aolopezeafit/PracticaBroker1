@@ -16,15 +16,24 @@ namespace Ping.Controllers
         public PingController()
         {
         }
+
         /// <summary>
         /// Inicio de tarea asíncrona para una nueva petición.
         /// </summary>
         public IAsyncResult BeginGetAsync(AsyncCallback callback, object state)
         {
-            Console.WriteLine("Nueva solicitud http: " + DateTime.Now.ToString());
-            var messageAsyncResult = new MessageAsyncResult(  callback, state);
-            ThreadPool.QueueUserWorkItem(CompleteProcess, messageAsyncResult);
-            return messageAsyncResult;
+            try
+            {
+                Console.WriteLine("Nueva solicitud http: " + DateTime.Now.ToString());
+                MessageAsyncResult mar = new MessageAsyncResult();
+                AsyncResult<String> result = new AsyncResult<String>(callback, state);
+                ThreadPool.QueueUserWorkItem(mar.GetRandomIntHelper, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new WebFaultException(System.Net.HttpStatusCode.ServiceUnavailable);
+            }
         }
 
         /// <summary>
@@ -32,23 +41,17 @@ namespace Ping.Controllers
         /// </summary>
         public string EndGetAsync(IAsyncResult asyncResult)
         {
-            var messageAsyncResult = asyncResult as MessageAsyncResult;
-            messageAsyncResult.AsyncWait.WaitOne();
-            Console.WriteLine("Enviando respuesta http al cliente: " + messageAsyncResult.Data);
-            if (messageAsyncResult.Exception==null)
+            try
             {
-                return messageAsyncResult.Data;
+                AsyncResult<String> r = asyncResult as AsyncResult<String>;
+                string result = "" + r.EndInvoke();
+                Console.WriteLine("Enviando respuesta http al cliente: " + result);
+                return result;
             }
-            else
+            catch (Exception ex)
             {
                 throw new WebFaultException(System.Net.HttpStatusCode.ServiceUnavailable);
             }
-        }
-
-        private void CompleteProcess(object state)
-        {
-            var messageAsyncResult = state as MessageAsyncResult;
-            messageAsyncResult.Completed();
         }
     }
 }

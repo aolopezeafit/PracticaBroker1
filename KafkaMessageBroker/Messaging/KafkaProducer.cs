@@ -1,9 +1,10 @@
 ﻿using Aolh.MessageBroker.Interfaces.Messaging;
-using KafkaNet;
-using KafkaNet.Model;
-using KafkaNet.Protocol;
+using Confluent.Kafka;
+using Confluent.Kafka.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Text;
 
 namespace Aolh.MessageBroker.Kafka.Messaging
 {
@@ -11,21 +12,37 @@ namespace Aolh.MessageBroker.Kafka.Messaging
     {
         public Uri Uri { get; private set; }
         public String Network { get; private set; }
-        private Producer producer;
+        private Producer<Null, string> producer;
         
         public KafkaProducer(string network, Uri uri)
         {
             Network = network;
             Uri = uri;
-            var router = new BrokerRouter(new KafkaOptions(uri));
-            producer = new Producer(router);
+            string srv = uri.ToString();
+
+            string tmp = "localhost";
+            var config = new Dictionary<string, object>
+            {
+                { "bootstrap.servers", srv },
+                { "client.id", tmp  },
+                { "default.topic.config", new Dictionary<string, object>
+                    {
+                        { "acks", "all" }
+                    }
+                }
+            };
+
+            producer = new Producer<Null, string>(config, null, new StringSerializer(Encoding.UTF8));
         }
 
         public void SendMessage(Interfaces.Messaging.Message message)
         {
             string data = Convert.ToBase64String(message.Content);
-            KafkaNet.Protocol.Message msg = new KafkaNet.Protocol.Message(data, message.Id);
-            producer.SendMessageAsync(Network, new List<KafkaNet.Protocol.Message> { msg }).Wait();
+            DateTime dt1 = DateTime.Now;
+            producer.ProduceAsync(Network, null, data);
+            DateTime dt2 = DateTime.Now;
+            double dif = (dt2 - dt1).TotalMilliseconds/1000;
+            Console.WriteLine("Kafka " + dif);
         }
     }
 }

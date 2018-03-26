@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Async\AsyncResult.cs" />
+    <Compile Include="Async\AsyncResultNoResult.cs" />
     <Compile Include="Async\MessageAsyncResult.cs" />
     <Compile Include="BackPressure\BackPressureService.cs" />
     <Compile Include="Controllers\IPingController.cs" />

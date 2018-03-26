@@ -17,7 +17,7 @@ namespace Ping.Async
     /// Tarea asíncrona para procesar solicitud del cliente.
     /// Implementa el observer del back pressure para saber si se procesa o no.
     /// </summary>
-    public class MessageAsyncResult : AsyncResult, IBasicBackPressureObserver
+    public class MessageAsyncResult : IBasicBackPressureObserver
     {
         public delegate void MessageReceivedHandler(object sender, bool cancel);
         public event MessageReceivedHandler MessageReceived;
@@ -32,12 +32,32 @@ namespace Ping.Async
         public Exception Exception { get; private set; }
         Request request;
 
-        public MessageAsyncResult( AsyncCallback callback, object state): base(callback, state)
+        public MessageAsyncResult()
         {
-            Task<string> task = ProcessAsync();
-            //task.Wait(60000);
-            Data = task.Result;
-            BackPressureService.backPressure.RemoveObserver(this);
+        }
+
+        public void GetRandomIntHelper(Object asyncResult)
+        {
+            AsyncResult<String> result = asyncResult as AsyncResult<String>;
+            try
+            {
+                Task<string> task = ProcessAsync();
+                //task.Wait(60000);
+                Data = task.Result;
+                BackPressureService.backPressure.RemoveObserver(this);
+                if (Exception == null)
+                {
+                    result.SetAsCompleted(false, Data);
+                }
+                else
+                {
+                    result.SetAsCompleted(false, Exception);
+                }
+            }
+            catch (Exception ex)
+            {
+                result.SetAsCompleted(false, ex);
+            }
         }
 
         /// <summary>
@@ -47,10 +67,10 @@ namespace Ping.Async
         {
             var tcs = new TaskCompletionSource<string>();
             MessageReceivedHandler delegateBackPressure = delegate (object sender, bool cancel) {
-                string str;
+                string str=null;
                 if (cancel)
                 {
-                    str = string.Format("Rechazado por back pressure." );
+                    Exception = new Exception("Rechazado por back pressure.");
                 }
                 else
                 {

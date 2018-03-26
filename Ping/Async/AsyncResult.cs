@@ -2,61 +2,30 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ping.Async
 {
-    public class AsyncResult : IAsyncResult, IDisposable
+    public class AsyncResult<TResult> : AsyncResultNoResult
     {
-        private AsyncCallback _callback;
-        private object _state;
-        private ManualResetEvent _manualResetEvent;
+        // Field set when operation completes
+        private TResult m_result = default(TResult);
 
-        public AsyncResult(AsyncCallback callback, object state)
+        public AsyncResult(AsyncCallback asyncCallback, Object state) : base(asyncCallback, state) { }
+
+        public void SetAsCompleted(Boolean completedSynchronously, TResult result)
         {
-            _callback = callback;
-            _state = state;
-            _manualResetEvent = new ManualResetEvent(false);
+            // Save the asynchronous operation's result
+            m_result = result;
+
+            // Tell the base class that the operation completed sucessfully (no exception)
+            base.SetAsCompleted(completedSynchronously, null);
         }
 
-        public bool IsCompleted
+        new public TResult EndInvoke()
         {
-            get { return _manualResetEvent.WaitOne(0, false); }
-        }
-
-        public WaitHandle AsyncWaitHandle
-        {
-            get { return _manualResetEvent; }
-        }
-
-        public object AsyncState
-        {
-            get { return _state; }
-        }
-        public ManualResetEvent AsyncWait
-        {
-            get { return _manualResetEvent; }
-
-        }
-        public bool CompletedSynchronously
-        {
-            get { return false; }
-        }
-
-        public void Completed()
-        {
-            _manualResetEvent.Set();
-            if (_callback != null)
-                _callback(this);
-        }
-
-        public void Dispose()
-        {
-            _manualResetEvent.Close();
-            _manualResetEvent = null;
-            _state = null;
-            _callback = null;
+            base.EndInvoke(); // Wait until operation has completed 
+            return m_result;  // Return the result (if above didn't throw)
         }
     }
 }

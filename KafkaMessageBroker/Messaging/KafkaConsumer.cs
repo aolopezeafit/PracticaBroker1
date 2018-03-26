@@ -1,7 +1,8 @@
 ﻿using Aolh.MessageBroker.Interfaces.Messaging;
-using KafkaNet;
-using KafkaNet.Model;
+using Confluent.Kafka;
+using Confluent.Kafka.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
@@ -11,41 +12,73 @@ namespace Aolh.MessageBroker.Kafka.Messaging
     {
         public Uri Uri { get; private set; }
         public String Network { get; private set; }
-        private Consumer consumer;
+        private Consumer<Null, string> consumer;
         private Thread threadReadMessages;
 
         public KafkaConsumer(string network, Uri uri)
         {
             Network = network;
             Uri = uri;
-            var options = new KafkaOptions(Uri);
-            var router = new BrokerRouter(options);
-            consumer = new Consumer(new ConsumerOptions(network, router));
+            string srv = uri.ToString();
+
+            string tmp = "localhost";
+
+            var config = new Dictionary<string, object>
+            {
+                { "bootstrap.servers", srv },
+                { "group.id", tmp },
+                { "default.topic.config", new Dictionary<string, object>
+                    {
+                        { "auto.offset.reset", "smallest" }
+                    }
+                }
+            };
+
+            consumer = new Consumer<Null, string>(config, null, new StringDeserializer(Encoding.UTF8));
+
+            consumer.OnMessage += (_, msg) =>
+            {
+                try
+                {
+                    ProcessMessage(msg);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            };
+
+            consumer.Subscribe(Network);
+
             threadReadMessages = new Thread(ReadMessages);
             threadReadMessages.IsBackground = true;
             threadReadMessages.Priority = ThreadPriority.Lowest;
             threadReadMessages.Start();
         }
 
+        private void ProcessMessage(Message<Null, string> item)
+        {
+            string id = null;
+            byte[] value = null;
+            if (item.Key != null)
+            {
+                //id = Encoding.UTF8.GetString(item.Key);
+            }
+            if (item.Value != null)
+            {
+                value = Convert.FromBase64String(item.Value);
+            }
+            RaiseMessageReceived(new Interfaces.Messaging.Message(id, value));
+        }
+
         private void ReadMessages()
         {
             try
             {
-                string id = null;
-                byte[] value = null;
-                string base64 = null;
-                foreach (var item in consumer.Consume())
+                bool cancelled = false;
+                while (!cancelled)
                 {
-                    if (item.Key != null)
-                    {
-                        id = Encoding.UTF8.GetString(item.Key);
-                    }
-                    if (item.Value != null)
-                    {
-                        base64=Encoding.UTF8.GetString(item.Value);
-                        value = Convert.FromBase64String(base64);
-                    }
-                    RaiseMessageReceived(new Message(id, value));
+                    consumer.Poll(100);
                 }
             }
             catch (Exception ex)

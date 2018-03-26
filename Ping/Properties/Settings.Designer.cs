@@ -43,7 +43,7 @@ namespace Ping.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:9092")]
+        [global::System.Configuration.DefaultSettingValueAttribute("localhost:9092")]
         public string MessageBrokerUri {
             get {
                 return ((string)(this["MessageBrokerUri"]));
